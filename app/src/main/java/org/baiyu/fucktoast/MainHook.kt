@@ -58,7 +58,7 @@ class MainHook : IXposedHookLoadPackage {
                     object : XC_MethodHook() {
                         @Throws(Throwable::class)
                         override fun beforeHookedMethod(param: MethodHookParam) {
-                            if (param.thisObject.javaClass.name == FullScreenNotificationDialog) {
+                            if (param.args.size == 2 && param.args[1] is String && param.args[1] == FULLSCREEN_TAG) {
                                 param.result = null
                             }
                         }
@@ -77,9 +77,9 @@ class MainHook : IXposedHookLoadPackage {
             is CharSequence -> arg1.toString()
             else -> ""
         }
-
-        // Record the text value using setAdditionalInstanceField
-        XposedHelpers.setAdditionalInstanceField(param.result, CUSTOM_FIELD, text)
+        if (textMatch(text)) {
+            XposedHelpers.setAdditionalInstanceField(param.thisObject, CUSTOM_FIELD, true)
+        }
     }
 
     private fun handleSetText(param: XC_MethodHook.MethodHookParam) {
@@ -93,26 +93,28 @@ class MainHook : IXposedHookLoadPackage {
             is CharSequence -> arg0.toString()
             else -> ""
         }
-        // Record the text value using setAdditionalInstanceField
-        XposedHelpers.setAdditionalInstanceField(param.thisObject, CUSTOM_FIELD, text)
+        XposedHelpers.setAdditionalInstanceField(param.thisObject, CUSTOM_FIELD, textMatch(text))
     }
 
     private fun handleShowMethod(param: XC_MethodHook.MethodHookParam) {
         // Retrieve the recorded text value using getAdditionalInstanceField
         val toast = param.thisObject as Toast
-        val text =
-            XposedHelpers.getAdditionalInstanceField(toast, CUSTOM_FIELD) as? String ?: return
-        // Add your logic here based on the recorded text value
-        if (BLOCKED_STRING.any { text.lowercase().contains(it) }) {
-            // Cancel the Toast by returning early
+        val isFullScreenToast =
+            XposedHelpers.getAdditionalInstanceField(toast, CUSTOM_FIELD) as? Boolean ?: false
+        if (isFullScreenToast) {
             param.result = null
+        }
+    }
+
+    private fun textMatch(text: String): Boolean {
+        return BLOCKED_STRING.any {
+            text.lowercase().contains(it)
         }
     }
 
     companion object {
         private val BLOCKED_STRING = setOf("full screen", "fullscreen", "全屏")
-        private const val CUSTOM_FIELD = "xpToastText"
-        private const val FullScreenNotificationDialog =
-            "mozilla.components.feature.prompts.dialog.FullScreenNotificationDialog"
+        private const val CUSTOM_FIELD = "isFullScreenToast"
+        private const val FULLSCREEN_TAG = "mozac_feature_prompts_full_screen_notification_dialog"
     }
 }
