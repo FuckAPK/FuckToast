@@ -46,6 +46,28 @@ class MainHook : IXposedHookLoadPackage {
             // Handle exceptions appropriately
             e.printStackTrace()
         }
+
+        try {
+            XposedHelpers.findClassIfExists(
+                "androidx.fragment.app.DialogFragment",
+                lpparam.classLoader
+            )?.let {
+                XposedBridge.hookAllMethods(
+                    it,
+                    "show",
+                    object : XC_MethodHook() {
+                        @Throws(Throwable::class)
+                        override fun beforeHookedMethod(param: MethodHookParam) {
+                            if (param.thisObject.javaClass.name == FullScreenNotificationDialog) {
+                                param.result = null
+                            }
+                        }
+                    }
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun handleMakeText(param: XC_MethodHook.MethodHookParam) {
@@ -90,5 +112,7 @@ class MainHook : IXposedHookLoadPackage {
     companion object {
         private val BLOCKED_STRING = setOf("full screen", "fullscreen", "全屏")
         private const val CUSTOM_FIELD = "xpToastText"
+        private const val FullScreenNotificationDialog =
+            "mozilla.components.feature.prompts.dialog.FullScreenNotificationDialog"
     }
 }
