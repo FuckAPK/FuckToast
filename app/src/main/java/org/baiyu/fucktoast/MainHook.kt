@@ -78,7 +78,7 @@ class MainHook : IXposedHookLoadPackage {
             else -> ""
         }
         if (textMatch(text)) {
-            XposedHelpers.setAdditionalInstanceField(param.thisObject, CUSTOM_FIELD, true)
+            XposedHelpers.setAdditionalInstanceField(param.result, CUSTOM_FIELD, true)
         }
     }
 
