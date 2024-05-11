@@ -11,8 +11,8 @@ android {
         applicationId = "org.baiyu.fucktoast"
         minSdk = 30
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
         resourceConfigurations += "en"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
