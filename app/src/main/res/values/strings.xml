@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Fuck Toast</string>
+    <string name="app_desc">Remove fullscreen toast from firefox</string>
+</resources>

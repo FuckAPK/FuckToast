@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="xposedscope">
+        <item>org.mozilla.firefox</item>
+        <item>org.mozilla.firefox_beta</item>
+        <item>org.mozilla.fenix</item>
+        <item>org.mozilla.fennec_fdroid</item>
+        <item>us.spotco.fennec_dos</item>
+    </string-array>
+</resources>
