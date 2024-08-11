@@ -1,9 +1,21 @@
+import java.io.ByteArrayOutputStream
 import java.util.Properties
 
 plugins {
     id("com.android.application")
     id("kotlin-android")
 }
+
+fun String.execute(currentWorkingDir: File = file("./")): String {
+    val byteOut = ByteArrayOutputStream()
+    project.exec {
+        workingDir = currentWorkingDir
+        commandLine = split("\\s".toRegex())
+        standardOutput = byteOut
+    }
+    return byteOut.toString().trim()
+}
+
 android {
     namespace = "org.lyaaz.fucktoast"
     compileSdk = 34
@@ -11,8 +23,8 @@ android {
         applicationId = "org.lyaaz.fucktoast"
         minSdk = 30
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.1"
+        versionCode = "git rev-list HEAD --count".execute().toInt()
+        versionName = "git describe --tag".execute()
         resourceConfigurations += "en"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
