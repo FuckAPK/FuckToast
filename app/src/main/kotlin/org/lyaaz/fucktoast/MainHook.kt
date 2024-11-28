@@ -1,5 +1,6 @@
 package org.lyaaz.fucktoast
 
+import android.widget.Toast
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
@@ -10,7 +11,7 @@ class MainHook : IXposedHookLoadPackage {
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
-        try {
+        runCatching {
             // mozilla.components.feature.prompts.dialog.FullScreenNotificationDialog
             val dialogFragment = XposedHelpers.findClass(
                 "androidx.fragment.app.DialogFragment",
@@ -34,8 +35,25 @@ class MainHook : IXposedHookLoadPackage {
                     }
                 }
             )
-        } catch (t: Throwable) {
-            XposedBridge.log(t)
+        }.onFailure {
+            XposedBridge.log(it)
+        }
+        // Firefox 132+
+        runCatching {
+            XposedHelpers.findAndHookMethod(
+                Toast::class.java,
+                "show",
+                object : XC_MethodHook() {
+                    override fun beforeHookedMethod(param: MethodHookParam) {
+                        if (Thread.currentThread().stackTrace.map { it.methodName }
+                                .any { it.startsWith("fullScreenChanged") }) {
+                            param.result = null
+                        }
+                    }
+                }
+            )
+        }.onFailure {
+            XposedBridge.log(it)
         }
     }
 
