@@ -24,7 +24,7 @@ android {
         minSdk = 30
         targetSdk = 35
         versionCode = "git rev-list HEAD --count".execute().toInt()
-        versionName = "git describe --tag".execute()
+        versionName = "git describe --tag --always".execute().removePrefix("v")
         resourceConfigurations += "en"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
