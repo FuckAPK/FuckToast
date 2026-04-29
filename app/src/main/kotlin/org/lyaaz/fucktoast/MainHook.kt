@@ -1,63 +1,55 @@
 package org.lyaaz.fucktoast
 
+import android.util.Log
 import android.widget.Toast
-import de.robv.android.xposed.IXposedHookLoadPackage
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
 
-class MainHook : IXposedHookLoadPackage {
+class MainHook : XposedModule() {
 
-    @Throws(Throwable::class)
-    override fun handleLoadPackage(lpparam: LoadPackageParam) {
+    override fun onPackageReady(param: PackageReadyParam) {
+        val classLoader = param.classLoader
+        // mozilla.components.feature.prompts.dialog.FullScreenNotificationDialog
         runCatching {
-            // mozilla.components.feature.prompts.dialog.FullScreenNotificationDialog
-            val dialogFragment = XposedHelpers.findClass(
+            val dialogFragment = Class.forName(
                 "androidx.fragment.app.DialogFragment",
-                lpparam.classLoader
+                true,
+                classLoader
             )
-            val fragmentManager = XposedHelpers.findClass(
+            val fragmentManager = Class.forName(
                 "androidx.fragment.app.FragmentManager",
-                lpparam.classLoader
+                true,
+                classLoader
             )
-            XposedHelpers.findAndHookMethod(
-                dialogFragment,
-                "show",
-                fragmentManager,
-                String::class.java,
-                object : XC_MethodHook() {
-                    @Throws(Throwable::class)
-                    override fun beforeHookedMethod(param: MethodHookParam) {
-                        if (param.args[1] == FULLSCREEN_NOTIFICATION_TAG) {
-                            param.result = null
-                        }
-                    }
+            val showMethod = dialogFragment.getMethod("show", fragmentManager, String::class.java)
+            hook(showMethod).intercept { chain ->
+                if (chain.args[1] == FULLSCREEN_NOTIFICATION_TAG) {
+                    null
+                } else {
+                    chain.proceed()
                 }
-            )
+            }
         }.onFailure {
-            XposedBridge.log(it)
+            log(Log.ERROR, TAG, "Failed to hook DialogFragment.show", it)
         }
         // Firefox 132+
         runCatching {
-            XposedHelpers.findAndHookMethod(
-                Toast::class.java,
-                "show",
-                object : XC_MethodHook() {
-                    override fun beforeHookedMethod(param: MethodHookParam) {
-                        if (Thread.currentThread().stackTrace.map { it.methodName }
-                                .any { it.startsWith("fullScreenChanged") }) {
-                            param.result = null
-                        }
-                    }
+            val showMethod = Toast::class.java.getMethod("show")
+            hook(showMethod).intercept { chain ->
+                if (Thread.currentThread().stackTrace.map { it.methodName }
+                        .any { it.startsWith("fullScreenChanged") }) {
+                    null
+                } else {
+                    chain.proceed()
                 }
-            )
+            }
         }.onFailure {
-            XposedBridge.log(it)
+            log(Log.ERROR, TAG, "Failed to hook Toast.show", it)
         }
     }
 
     companion object {
+        private const val TAG = "FuckToast"
         private const val FULLSCREEN_NOTIFICATION_TAG =
             "mozac_feature_prompts_full_screen_notification_dialog"
     }
