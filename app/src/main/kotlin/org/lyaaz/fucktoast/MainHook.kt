@@ -36,8 +36,10 @@ class MainHook : XposedModule() {
         runCatching {
             val showMethod = Toast::class.java.getMethod("show")
             hook(showMethod).intercept { chain ->
-                if (Thread.currentThread().stackTrace.map { it.methodName }
-                        .any { it.startsWith("fullScreenChanged") }) {
+                val isFullScreen = Thread.currentThread().stackTrace.any {
+                    it.methodName.startsWith("fullScreenChanged")
+                }
+                if (isFullScreen) {
                     null
                 } else {
                     chain.proceed()

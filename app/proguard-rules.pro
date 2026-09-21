@@ -21,4 +21,5 @@
 #-renamesourcefileattribute SourceFile
 
 -keep public class org.lyaaz.fucktoast.MainHook
+-adaptresourcefilecontents META-INF/xposed/java_init.list
 -dontobfuscate
